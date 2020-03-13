@@ -53,13 +53,14 @@ function elementMaker(elementType, elementText = '', elementClass = '') {
 }
 
 // 2. GitHub card maker
-function createGitHubCard(data) {
+function createGitHubCard(data, parent) {
 
   // element = elementMaker(type [, text, class])
   let card = elementMaker('div', '', 'card');
 
   let img = elementMaker('img');
   img.src = data.avatar_url;
+  img.addEventListener('click', () => buildCards(data.login, parent));
 
   let info = elementMaker('div', '', 'card-info');
   let name = elementMaker('h3', data.name, 'name');
@@ -105,11 +106,17 @@ const github = axios.create({
 function getReqUrl(username) { return `https://api.github.com/users/${username}` };
 const followersArray = [];
 
-function buildCards(username) {
+function buildCards(username, node) {
+
+  // clear all current cards
+  while (node.firstChild) {
+    node.removeChild(node.firstChild);
+  }
+
   github.get(getReqUrl(username))
   .then(response => {
       // build and display card
-      document.querySelector('.cards').append(createGitHubCard(response.data));
+      node.append(createGitHubCard(response.data, node));
   
     // build followers array
     github.get(response.data.followers_url)
@@ -125,7 +132,7 @@ function buildCards(username) {
         github.get(getReqUrl(item))
         .then(response => {
           // build and display card
-          document.querySelector('.cards').append(createGitHubCard(response.data));
+          node.append(createGitHubCard(response.data, node));
       
         })
         .catch(error => {
@@ -139,11 +146,13 @@ function buildCards(username) {
     });
   })
   .catch(error => {
+    let orig = document.querySelector('.cards').cloneNode(true);
+
     document.querySelector('.errors').append(createErrorCard(error, username));
   });
 }
 
-buildCards(BASE_USER);
+buildCards(BASE_USER, document.querySelector('.cards'));
 
 
 
@@ -158,8 +167,6 @@ buildCards(BASE_USER);
            create a new component and add it to the DOM as a child of .cards
 */
 
-
-
 /* Step 5: Now that you have your own card getting added to the DOM, either 
           follow this link in your browser https://api.github.com/users/<Your github name>/followers 
           , manually find some other users' github handles, or use the list found 
@@ -169,7 +176,6 @@ buildCards(BASE_USER);
           Using that array, iterate over it, requesting data for each user, creating a new card for each
           user, and adding that card to the DOM.
 */
-
 
 // document.querySelector('.cards').append(createCard(data2));
 
